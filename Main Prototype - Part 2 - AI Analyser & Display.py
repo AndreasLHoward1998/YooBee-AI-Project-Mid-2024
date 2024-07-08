@@ -1,0 +1,45 @@
+import pandas as pd
+import tkinter as tk
+from tkinter import ttk
+
+# Load the CSV file
+df = pd.read_csv('EEG_Analysis.csv')
+
+# Print out the column names and first few rows
+print("Column Names:", df.columns)
+print(df.head())
+
+# Create a Tkinter window
+root = tk.Tk()
+root.title("EEG Analysis")
+
+# Create a Treeview widget
+tree = ttk.Treeview(root)
+tree['columns'] = list(df.columns)
+tree.heading('#0', text='Index', anchor='w')
+for col in df.columns:
+    tree.heading(col, text=col, anchor='w')
+
+# Insert data into the Treeview
+for index, row in df.iterrows():
+    tree.insert('', 'end', text=index, values=list(row))
+
+tree.pack(expand=True, fill='both')
+
+# Function to update colors based on engagement and memory commitment
+def update_colors():
+    for item in tree.get_children():
+        values = tree.item(item, 'values')
+        engagement = float(values[df.columns.get_loc('Engagement')])
+        memory_commitment = float(values[df.columns.get_loc('Memory Commitment')])
+        if engagement > 0.1:
+            color = 'blue'
+        else:
+            color = 'red'
+        tree.item(item, tags=(color,))
+    tree.tag_configure('red', background='red', foreground='white')
+    tree.tag_configure('blue', background='blue', foreground='white')
+
+update_colors()
+
+root.mainloop()

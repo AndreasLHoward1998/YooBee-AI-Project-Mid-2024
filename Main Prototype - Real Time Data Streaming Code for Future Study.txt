@@ -1,0 +1,29 @@
+from neurosity import Notion
+import csv
+import time
+
+# Initialize the Notion device
+notion = Notion({
+    "device_id": "YOUR_DEVICE_ID",
+    "email": "YOUR_EMAIL",
+    "password": "YOUR_PASSWORD"
+})
+
+def on_data(data):
+    print(data)
+    # Write data to a CSV file
+    with open('eeg_data.csv', mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([data['timestamp']] + data['eeg'])
+
+# Start streaming EEG data
+notion.brainwaves("raw").subscribe(on_data)
+
+# Keep the script running
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    print("Streaming stopped.")
+
+Replace YOUR_DEVICE_ID, YOUR_EMAIL, and YOUR_PASSWORD with your actual Neurosity Crown credentials.

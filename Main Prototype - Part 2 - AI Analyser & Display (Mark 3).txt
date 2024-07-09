@@ -1,0 +1,45 @@
+import pandas as pd
+import tkinter as tk
+from tkinter import ttk
+from docx import Document
+
+# Load the CSV file
+df = pd.read_csv('EEG_Analysis.csv')
+
+# Load the Word document
+doc = Document('Intro to Machine Learning - activity.docx')
+
+# Extract text from the Word document
+doc_text = '\n'.join([para.text for para in doc.paragraphs])
+
+# Print out the column names and first few rows for debugging
+print("Column Names:", df.columns)
+print(df.head())
+
+# Create a Tkinter window
+root = tk.Tk()
+root.title("EEG Analysis and Document Display")
+
+# Create a Text widget to display the document text
+text_widget = tk.Text(root, wrap='word')
+text_widget.pack(expand=True, fill='both')
+
+# Insert the document text into the Text widget
+text_widget.insert('1.0', doc_text)
+
+# Function to update text color based on engagement values
+def update_text_colors():
+    # Just a simple example to color the whole text based on first engagement value
+    # You can enhance this to color specific parts based on your criteria
+    engagement = df['Engagement'].iloc[0]  # Example: using the first engagement value
+    if engagement > 0.1:
+        color = 'blue'
+    else:
+        color = 'red'
+    
+    text_widget.tag_add('color_tag', '1.0', 'end')
+    text_widget.tag_configure('color_tag', foreground=color)
+
+update_text_colors()
+
+root.mainloop()

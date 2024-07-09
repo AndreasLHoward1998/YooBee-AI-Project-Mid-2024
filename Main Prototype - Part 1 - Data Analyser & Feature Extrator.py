@@ -3,10 +3,10 @@ import numpy as np
 import mne
 from scipy.signal import butter, filtfilt
 
-# Function to load and rename columns
+# This is the function to load and rename columns
 def load_and_rename_csv(file_path):
     df = pd.read_csv(file_path, header=None, low_memory=False)  # Read without header
-    # Add the correct header
+    # This will add the correct header/s
     new_columns = [
         'Sample Count',
         'EEG Channel Value: CP3',
@@ -22,18 +22,18 @@ def load_and_rename_csv(file_path):
     ]
     df.columns = new_columns
 
-    # Convert all columns to numeric, coerce errors to NaN
+    # This will convert all columns to numeric, coerce errors to NaN
     for col in df.columns:
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
     return df
 
-# Function to preprocess EEG data (e.g., filtering)
+# Below is the function to preprocess the EEG data (e.g., filtering)
 def preprocess_eeg_data(df, sfreq=256):
-    # Convert timestamps to seconds
+    # This will convert timestamps from milliseconds to seconds, because the original form was too difficult to read
     df['Timestamp'] = df['Timestamp'] / 1000.0
     
-    # Extract EEG channels
+    # Below will extract EEG channels
     eeg_channels = [
         'EEG Channel Value: CP3',
         'EEG Channel Value: C3',
@@ -47,7 +47,7 @@ def preprocess_eeg_data(df, sfreq=256):
     
     eeg_data = df[eeg_channels].dropna().values.T
 
-    # Apply band-pass filter
+    # This applies the band-pass filter
     def bandpass_filter(data, lowcut, highcut, fs, order=4):
         nyquist = 0.5 * fs
         low = lowcut / nyquist
@@ -58,17 +58,17 @@ def preprocess_eeg_data(df, sfreq=256):
     
     filtered_data = bandpass_filter(eeg_data, 0.5, 50, sfreq)
     
-    # Create MNE Raw object
+    # This will create an MNE Raw object
     info = mne.create_info(ch_names=eeg_channels, sfreq=sfreq, ch_types='eeg')
     raw = mne.io.RawArray(filtered_data, info)
     
     return raw
 
-# Function to extract features (e.g., power spectral density)
+# Here we have a function to extract features (e.g., power spectral density)
 def extract_features(raw, sfreq=256):
     from mne.time_frequency import psd_array_multitaper
 
-    # Calculate power spectral density for each channel
+    # This will calculate power spectral density for each channel
     psds = []
     for data in raw.get_data():
         psd, freqs = psd_array_multitaper(data, sfreq, fmin=0.5, fmax=50, adaptive=True, normalization='full')
@@ -76,7 +76,7 @@ def extract_features(raw, sfreq=256):
 
     psds = np.array(psds)
     
-    # Ensure the PSDs have the same length
+    # The code below will ensure the PSDs have the same length
     min_length = min(psd.shape[0] for psd in psds)
     psds = np.array([psd[:min_length] for psd in psds])
     freqs = freqs[:min_length]
@@ -84,9 +84,9 @@ def extract_features(raw, sfreq=256):
     psd_df = pd.DataFrame(psds, index=raw.ch_names, columns=freqs)
     return psd_df
 
-# Function to analyze drops in concentration, engagement, and memory commitment
+# This is the function to analyze drops in concentration, engagement, and memory commitment
 def analyze_eeg_data(psd_df):
-    # Define frequency bands of interest
+    # This will define frequency bands of interest
     theta_band = (4, 8)
     alpha_band = (8, 12)
     beta_band = (12, 30)
@@ -102,7 +102,7 @@ def analyze_eeg_data(psd_df):
     engagement = beta_power / (theta_power + alpha_power)
     memory_commitment = alpha_power / (theta_power + beta_power)
     
-    # Create a DataFrame to hold the results
+    # This creates a DataFrame to hold the results
     analysis_df = pd.DataFrame({
         'Channel': psd_df.index,
         'Theta Power': theta_power,
@@ -114,29 +114,29 @@ def analyze_eeg_data(psd_df):
     
     return analysis_df
 
-# Main function to execute the workflow
+# Here we have the main function to execute the workflow
 def main(file_path):
     df = load_and_rename_csv(file_path)
     raw = preprocess_eeg_data(df)
     features = extract_features(raw)
     
-    # Add "Time" header to the first cell
+    # This adds a "Time" header to the first cell
     features.index.name = 'Time'
     
-    # Analyze EEG data for concentration, engagement, and memory commitment
+    # This will analyze the EEG data for concentration, engagement, and memory commitment
     analysis = analyze_eeg_data(features)
     
     return features, analysis
 
-# Execute the workflow with the provided file path
-file_path = 'Prototype Dataset 1.csv'  # Ensure this file is in the same directory as the script
+# Below will execute the workflow with the provided file path
+file_path = 'Prototype Dataset 1.csv'  # This will ensure this file is in the same directory as the script
 features, analysis = main(file_path)
 
-# Save features to a CSV file
+# The code below will save the features to a CSV file for analysis
 features.to_csv('Extracted_Features.csv')
 
-# Save analysis to a CSV file
+# Next, the code below will save the analysis to a CSV file for the AI to interpret
 analysis.to_csv('EEG_Analysis.csv')
 
-# Print out a sample of the analysis
+# Finally a print out of the sample of the analysis will be created so the user can double check
 print(analysis.head())
